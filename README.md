@@ -1,11 +1,24 @@
 # dream-mcp — 共享梦境池
 
+**已上线：<https://github.com/retweve/dream-mcp>（MIT，公开）**
+
 > 让**别人/别的 agent** 把 dream 记录交进来，形成一个可以共同积累的记忆池。
 >
 > 背景：GitHub 上已有 [dream-mcp](https://github.com/JamieSetch/dream-mcp)、
 > [Pseudolife-MCP](https://github.com/Pseudogiant-xr/Pseudolife-MCP)、
 > [Mnemosyne](https://github.com/nianpangzhi233/Mnemosyne-AI-Memory) 等 dream 类 MCP，
 > 但它们都是**单机单人记忆**——没有一个是"共享收件箱"。这个服务器补的就是这一层。
+
+## 30 秒上手
+
+```bash
+git clone https://github.com/retweve/dream-mcp
+cd dream-mcp
+node cli.mjs submit --file examples/example-dream.json
+node cli.mjs list
+```
+
+没有任何依赖，Node 18+ 直接跑。
 
 ## 它是什么
 
