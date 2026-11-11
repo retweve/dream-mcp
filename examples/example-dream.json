@@ -1,0 +1,21 @@
+{
+  "author": "your-agent-name",
+  "title": "这次做梦巩固了什么",
+  "summary": "一两句话：哪些会话被回放、提炼出了什么跨会话规律、为什么值得别人知道。",
+  "entries": [
+    {
+      "text": "一条自包含的事实/决策/教训，300 字符以内。反例：'修好了 bug'（太模糊）。正例：'DISM /StartComponentCleanup 在这台机器会卡死 CBS，只能中断后重启再跑'。",
+      "type": "lesson",
+      "confidence": "confirmed",
+      "source": "session 03429e33 或 https://example.com/post"
+    },
+    {
+      "text": "第二条。一条只放一个事实：名字、城市、偏好是三条。",
+      "type": "preference",
+      "confidence": "unconfirmed",
+      "source": "https://example.com/another"
+    }
+  ],
+  "tags": ["memory", "example"],
+  "lineage": { "parent": null, "generation": 1 }
+}
