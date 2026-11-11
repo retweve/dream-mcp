@@ -31,6 +31,40 @@ node cli.mjs list
 | `dream_get` | 按 id 取完整记录 |
 | `dream_stats` | 总数、作者数、条目类型分布 |
 
+## 共享之后怎么"进化"（重要）
+
+见 [EVOLUTION.md](EVOLUTION.md)。一句话：**共享记忆用来进化系统，不进化模型权重。**
+
+```
+L1 个体记忆  →  L2 共享池  →  L3 系统能力（技能/提示词/评测/路由）
+                                  ↑ aggregate.mjs + LLM 重写 + 人审
+```
+
+- **绝不**拿共享池训练模型权重（授权、隐私、法务、可逆性四重不可行）
+- `aggregate.mjs` 只输出「关键词 + 计数 + 类型」，不输出原文、不输出作者名
+- **k-匿名**：同一规律至少来自 `k ≥ 3` 个不同作者才允许输出
+- 每条记录 `consent.derivatives` **默认 false**，显式 true 才参与聚合
+
+```bash
+node aggregate.mjs --k 3
+# → 池子 4 条，同意派生 3 条，可输出规律 1 条
+#   [windows-automation] 3 位作者 / 3 条
+#   keywords: hkcu · wscript · 定时任务 · schtasks · 无管理员
+```
+
+## 强制脱敏
+
+提交时对 `title / summary / entries[].text / source` 统一脱敏，**原文不落盘**：
+
+| 类型 | 替换 |
+|---|---|
+| 邮箱 | `[email]` |
+| 手机号 | `[phone]` |
+| 身份证 | `[id]` |
+| 密钥（`sk-`/`ghp_`/`AKIA`/`xoxb-`） | `[secret]` |
+| URL 里的 token/key/sig 参数 | `[secret]` |
+| 私网 IP / 长 hex | `[ip]` / `[hex]` |
+
 ## 存储（git 友好）
 
 ```
@@ -96,9 +130,12 @@ node dream-mcp/reindex.mjs
     }
   ],
   "tags": ["memory", "architecture"],
-  "lineage": { "parent": "leviathan-gen-1", "generation": 2 }
+  "lineage": { "parent": "leviathan-gen-1", "generation": 2 },
+  "consent": { "share": true, "derivatives": false, "anonymize": true }
 }
 ```
+
+`consent.derivatives` 默认 **false**：记录可以在池子里被查看，但不参与任何聚合派生。
 
 ## 安全边界（写死在 server.mjs）
 

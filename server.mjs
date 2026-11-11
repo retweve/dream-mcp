@@ -32,6 +32,24 @@ const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const nowISO = () => new Date().toISOString();
 const slug = (s) => String(s || 'dream').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'dream';
 
+// ---------- 强制脱敏 ----------
+// 脱敏在写入前完成：原文不落盘。这是底线，不依赖提交者自觉。
+const REDACTIONS = [
+  [/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '[email]'],
+  [/\b1[3-9]\d{9}\b/g, '[phone]'],
+  [/\b\d{17}[\dXx]\b/g, '[id]'],
+  [/\b(sk-[A-Za-z0-9_-]{4,}|ghp_[A-Za-z0-9]{16,}|gho_[A-Za-z0-9]{16,}|xoxb-[A-Za-z0-9-]{10,}|AKIA[A-Z0-9]{12,})\b/g, '[secret]'],
+  [/([?&](?:token|key|api[_-]?key|access[_-]?token|secret|sig|signature)=)[^&\s"'<>]+/gi, '$1[secret]'],
+  [/\b(10\.\d{1,3}|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b/g, '[ip]'],
+  [/\b[a-f0-9]{32,}\b/gi, '[hex]'],
+];
+function sanitize(s) {
+  if (typeof s !== 'string') return s;
+  let out = s;
+  for (const [re, tag] of REDACTIONS) out = out.replace(re, tag);
+  return out;
+}
+
 function fail(code, message) {
   const e = new Error(message);
   e.rpcCode = code;
@@ -57,7 +75,7 @@ function normalizeEntries(entries) {
     if (text.length > LIMITS.text) throw fail(-32602, `entries[${i}].text exceeds ${LIMITS.text} chars`);
     const type = ['fact', 'decision', 'preference', 'lesson', 'rule', 'warning', 'theory', 'plan'].includes(e.type) ? e.type : 'fact';
     const confidence = ['confirmed', 'unconfirmed', 'theory'].includes(e.confidence) ? e.confidence : 'unconfirmed';
-    return { text, type, confidence, source: e.source ? String(e.source).slice(0, 200) : null };
+    return { text: sanitize(text), type, confidence, source: e.source ? sanitize(String(e.source).slice(0, 200)) : null };
   });
 }
 
@@ -66,10 +84,10 @@ const tools = {
   dream_submit(args) {
     const author = String(args.author ?? '').trim();
     if (!author) throw fail(-32602, 'author is required (who is dreaming?)');
-    const title = String(args.title ?? '').trim();
+    const title = sanitize(String(args.title ?? '').trim());
     if (!title) throw fail(-32602, 'title is required');
     if (title.length > LIMITS.title) throw fail(-32602, `title exceeds ${LIMITS.title} chars`);
-    const summary = String(args.summary ?? '').trim();
+    const summary = sanitize(String(args.summary ?? '').trim());
     if (summary.length > LIMITS.summary) throw fail(-32602, `summary exceeds ${LIMITS.summary} chars`);
     const entries = normalizeEntries(args.entries);
     const tags = Array.isArray(args.tags) ? args.tags.slice(0, LIMITS.tags).map(t => String(t).slice(0, 32)) : [];
@@ -77,7 +95,12 @@ const tools = {
       ? { parent: args.lineage.parent ? String(args.lineage.parent).slice(0, 80) : null, generation: Number(args.lineage.generation) || null }
       : null;
 
-    const body = { author, title, summary, entries, tags, lineage };
+    // 同意模型：share 必须为真；derivatives 默认 false（不参与聚合派生）
+    const c = args.consent && typeof args.consent === 'object' ? args.consent : {};
+    const consent = { share: c.share !== false, derivatives: c.derivatives === true, anonymize: c.anonymize !== false };
+    if (!consent.share) throw fail(-32602, 'consent.share is false: this pool only stores records meant to be shared');
+
+    const body = { author, title, summary, entries, tags, lineage, consent };
     const raw = JSON.stringify(body);
     if (Buffer.byteLength(raw) > LIMITS.body) throw fail(-32602, `dream exceeds ${LIMITS.body} bytes`);
 
@@ -94,6 +117,7 @@ const tools = {
       entries: entries.length,
       tags,
       types: [...new Set(entries.map(e => e.type))],
+      derivatives: consent.derivatives,
     });
     return { id, submittedAt: record.submittedAt, entries: entries.length, path: path.join(INBOX, `${id}.json`) };
   },
@@ -164,6 +188,16 @@ const TOOL_DEFS = [
         lineage: {
           type: 'object',
           properties: { parent: { type: 'string' }, generation: { type: 'number' } },
+          additionalProperties: false,
+        },
+        consent: {
+          type: 'object',
+          description: 'share (required true), derivatives (default false), anonymize (default true)',
+          properties: {
+            share: { type: 'boolean' },
+            derivatives: { type: 'boolean' },
+            anonymize: { type: 'boolean' },
+          },
           additionalProperties: false,
         },
       },
