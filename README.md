@@ -29,7 +29,6 @@ node cli.mjs list
 | inclusion proof | `node prove.mjs --id <id>` → `node prove.mjs --verify proof.json` | RFC 6962 |
 | 一致性证明 | `node prove.mjs --consistency <m>` | RFC 6962 |
 | 删除证明 | `node erase.mjs --id <id> --yes`（tombstone + 重建索引 + 零残留断言） | GDPR Art.17 |
-
 **签名覆盖什么**：`JCS({author,title,summary,entries,tags,lineage,consent})`，
 服务器附加字段（id/submittedAt/contentHash）不参与签名。签名封套在顶层 `.sig`：
 
@@ -43,8 +42,14 @@ node cli.mjs list
 **迁移兼容**：旧记录（`hashAlg` 缺失）标为 `legacy-jsonstringify`，不重算哈希、不做签名验证；
 新记录一律 `jcs-sha256/v1`。去重只在同 `hashAlg` 组内比较。
 
-**已知限制**：一致性证明的轻客户端验证（只给 oldRoot/newRoot/proof）尚未实现，
-当前 `verifyConsistency` 需要完整叶序列（服务端审计用），登记在 G2。
+**已验证（2026-11-11，G2 补强）**：
+- 一致性证明**轻客户端验证**已实现：`verifyConsistencyLight(m, n, oldRoot, newRoot, proof)`，
+  测试覆盖 n=2..24 的全部 m、篡改单元素、proof 过短/过长、错误 oldRoot、m=0/m=n 边界。
+- **RFC 8032 §7.1 官方向量** TEST 1/2/3/1024 已落成测试：签名逐字节比对 RFC 结果，
+  并验证公钥可由私钥推导、篡改消息/签名被拒（向量来源见 `tests/fixtures/README.md`）。
+- `npm test` **59/59 通过**。
+
+**已知限制**：暂无功能缺口；G3 待补红队报告与公开基准对比。
 
 没有任何依赖，Node 18+ 直接跑。
 

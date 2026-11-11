@@ -3,8 +3,8 @@
  *
  * - `mth` / `auditPath`：服务端用（有完整叶子）
  * - `verifyInclusion`：**轻客户端**用（只需 index + size + 叶数据 + 路径 + 根，不需要其它叶子）
- * - `consistencyProof` / `verifyConsistency`：append-only 证明。当前 verifyConsistency 需要完整叶子序列
- *   （服务端审计用）；轻客户端版留待 G2——已在 evo/sources/g1-rfc-prerequisites.md 登记。
+ * - `consistencyProof` / `verifyConsistency` / `verifyConsistencyLight`：append-only 证明。
+ *   前者需完整叶子（服务端审计），`verifyConsistencyLight` 只需 oldRoot/newRoot/proof（轻客户端）。
  *
  * 注意：audit path 是 inner-first，验证必须按递归结构从"最后一段"开始收，
  * 不能按数组顺序线性回放（线性回放会错判左右子树）。
@@ -104,4 +104,49 @@ export function verifyConsistency(m, leaves, oldRoot, newRoot, proof) {
   const expected = consistencyProof(m, leaves);
   if (expected.length !== proof.length) return false;
   return expected.every((b, i) => b.equals(proof[i]));
+}
+
+/**
+ * 轻客户端一致性验证（RFC 6962 §2.1.2 的逆向算法）。
+ * 输入只有 m、n、oldRoot、newRoot、proof，不需要其它叶子。
+ *
+ * 递归地重建「前缀根」与「子树根」：
+ *   - m == n 且 known=true：直接使用调用方给出的已知前缀根（顶层即 oldRoot）
+ *   - m == n 且 known=false：下一个 proof 元素就是该子树的完整根
+ *   - m <= k（k 为小于 n 的最大 2 的幂）：先在左子树递归，再用下一元素作右兄弟
+ *   - m > k：先在右子树递归（known=false），再用下一元素作左兄弟
+ */
+export function verifyConsistencyLight(m, n, oldRoot, newRoot, proof) {
+  if (!Number.isInteger(m) || !Number.isInteger(n) || m < 0 || m > n) return false;
+  if (m === 0) return isEmptyRoot(oldRoot) && proof.length === 0;
+  if (m === n) return proof.length === 0 && oldRoot.equals(newRoot);
+
+  let pos = 0;
+  const rec = (mm, nn, known, knownHash) => {
+    if (mm === nn) {
+      if (known) return { prefix: knownHash, full: knownHash };
+      if (pos >= proof.length) throw new Error('proof too short');
+      const h = proof[pos++];
+      return { prefix: h, full: h };
+    }
+    let k = 1;
+    while (k * 2 < nn) k *= 2;
+    if (mm <= k) {
+      const sub = rec(mm, k, known, knownHash);
+      if (pos >= proof.length) throw new Error('proof too short');
+      const sib = proof[pos++];
+      return { prefix: sub.prefix, full: nodeHash(sub.full, sib) };
+    }
+    const sub = rec(mm - k, nn - k, false, null);
+    if (pos >= proof.length) throw new Error('proof too short');
+    const sib = proof[pos++];
+    return { prefix: nodeHash(sib, sub.prefix), full: nodeHash(sib, sub.full) };
+  };
+
+  try {
+    const r = rec(m, n, true, oldRoot);
+    return pos === proof.length && r.prefix.equals(oldRoot) && r.full.equals(newRoot);
+  } catch {
+    return false;
+  }
 }
