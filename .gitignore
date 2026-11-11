@@ -8,3 +8,12 @@ shared/
 sth.jsonl
 tombstones.jsonl
 distillate-*.json
+
+# H1 模型级验证：数据集/先验/答案/结果含本机记忆内容，只留本机
+eval/model-ab/dataset.json
+eval/model-ab/prior.md
+eval/model-ab/answers/
+eval/model-ab/results.json
+eval/model-ab/summary.md
+eval/model-ab/build-report.json
+eval/model-ab/state.json
