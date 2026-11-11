@@ -67,6 +67,10 @@ function jaccard(a, b) {
   return inter / (a.size + b.size - inter);
 }
 
+// 指令类词不进先验：防止提交内容里的「忽略之前指令」被当成关键词回灌给下游模型（T02）。
+// 中文按 2-4 字滑窗抽取，所以用「包含」判断而不是整词相等。
+const INSTRUCTION_WORDS = /忽略|无视|执行|覆盖|绕过|指令|提示词|系统提示|开发者模式|越狱|ignore|override|execute|system|prompt|instruction|assistant/i;
+
 function keywordsOf(text) {
   const words = [
     ...(text.match(/[A-Za-z][A-Za-z0-9_.\-/\\]{3,}/g) || []).map(w => w.toLowerCase()),
@@ -74,6 +78,7 @@ function keywordsOf(text) {
   ];
   const freq = new Map();
   for (const w of words) {
+    if (INSTRUCTION_WORDS.test(w)) continue;
     if (/^(这个|那个|可以|需要|已经|因为|所以|但是|如果|就是|还是|一个|不是|没有|什么|怎么|这样|那样|现在|时候|问题|东西|the|and|for|with)$/.test(w)) continue;
     freq.set(w, (freq.get(w) || 0) + 1);
   }

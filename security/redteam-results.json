@@ -1,0 +1,125 @@
+{
+  "at": "2026-11-11T14:41:30.644Z",
+  "pass": 11,
+  "fail": 0,
+  "skip": 2,
+  "rows": [
+    {
+      "id": "T01",
+      "threat": "记忆投毒（先验回灌）",
+      "attack": "提交含指令文本的记录 3 份 → 聚合 → 检查先验关键词",
+      "expected": "关键词中不含指令词",
+      "actual": "clean",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T02",
+      "threat": "提示注入（先验层）",
+      "attack": "检查 aggregate 的 INSTRUCTION_WORDS 过滤",
+      "expected": "过滤表覆盖 忽略/执行/指令",
+      "actual": "覆盖 3/3",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T04",
+      "threat": "去匿名化",
+      "attack": "聚合输出里搜作者名",
+      "expected": "不含任何作者名",
+      "actual": "none",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T06",
+      "threat": "路径穿越",
+      "attack": "getDream({id:\"../../etc/passwd\"})",
+      "expected": "拒绝",
+      "actual": "拒绝: valid id is required",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T07",
+      "threat": "重复提交",
+      "attack": "同内容提交两次",
+      "expected": "第二次返回 duplicate",
+      "actual": "duplicate=true",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T08",
+      "threat": "超限条目",
+      "attack": "提交 301 字符条目",
+      "expected": "拒绝",
+      "actual": "拒绝",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T08b",
+      "threat": "空 entries",
+      "attack": "提交空 entries",
+      "expected": "拒绝",
+      "actual": "拒绝",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T09",
+      "threat": "HTTP 鉴权",
+      "attack": "无 token / 假 token / 真 token 请求 /stats",
+      "expected": "401/401/200",
+      "actual": "401/401/200",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T11",
+      "threat": "删除零残留",
+      "attack": "按作者删除后断言 grep 无残留",
+      "expected": "PASS",
+      "actual": "PASS",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T14",
+      "threat": "伪造签名",
+      "attack": "提交签名值伪造的记录",
+      "expected": "拒绝",
+      "actual": "拒绝",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T15",
+      "threat": "伪造 Merkle 证明",
+      "attack": "篡改 inclusion proof 的一个节点",
+      "expected": "验证失败",
+      "actual": "验证失败",
+      "verdict": "PASS",
+      "note": ""
+    },
+    {
+      "id": "T05",
+      "threat": "Sybil 刷 k",
+      "attack": "一人多密钥伪造多作者",
+      "expected": "当前无法防住（需外部背书）",
+      "actual": "登记为已知风险",
+      "verdict": "SKIP",
+      "note": "密钥不能绑定真实身份"
+    },
+    {
+      "id": "T10",
+      "threat": "限流绕过",
+      "attack": "反代后同 IP 多请求",
+      "expected": "按 IP 限流可被代理绕过",
+      "actual": "登记为已知风险",
+      "verdict": "SKIP",
+      "note": "需在反代层限流"
+    }
+  ]
+}

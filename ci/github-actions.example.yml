@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.15'
+      - name: unit tests
+        run: npm test
+      - name: eval harness (invariants + paired A/B level-0)
+        run: npm run eval
+      - name: red team (threat model)
+        run: npm run redteam

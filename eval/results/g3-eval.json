@@ -1,0 +1,68 @@
+{
+  "at": "2026-11-11T14:41:29.174Z",
+  "level": "level-0-instrument",
+  "checks": [
+    {
+      "name": "提交幂等：同内容重复提交不新增记录",
+      "ok": true,
+      "detail": "0 → 1"
+    },
+    {
+      "name": "JCS 哈希与键序无关",
+      "ok": true,
+      "detail": "43258cff783f"
+    },
+    {
+      "name": "k-匿名：不足 k 位作者的规律不输出",
+      "ok": true,
+      "detail": "0 patterns below k"
+    },
+    {
+      "name": "Merkle：inclusion proof 轻客户端可验证",
+      "ok": true,
+      "detail": "7/7 leaves"
+    },
+    {
+      "name": "Merkle：轻客户端一致性验证",
+      "ok": true,
+      "detail": "m=1..8"
+    },
+    {
+      "name": "删除：按作者删除后零残留",
+      "ok": true,
+      "detail": "PASS"
+    }
+  ],
+  "ab": {
+    "n": 24,
+    "correctA": 8,
+    "correctB": 24,
+    "rateA": 0.333,
+    "rateB": 1,
+    "pairedDiff": 0.667,
+    "ci95": [
+      0.5,
+      0.833
+    ],
+    "cohensH": 1.911,
+    "falsePositive": {
+      "A": 0,
+      "B": 0
+    },
+    "priorKeywords": 21
+  },
+  "unverified": [
+    {
+      "item": "H1: 模型级 A/B（前置 prior 是否让 agent 答得更准）",
+      "reason": "需要模型调用；本仓库规则禁止本地模块联网"
+    },
+    {
+      "item": "公开基准（LongMemEval / CL-Bench 子集）",
+      "reason": "需要下载数据集/跑外部评测，未执行，不伪造数字"
+    },
+    {
+      "item": "模型层注入（T01/T02）真实影响",
+      "reason": "文本层无法判定模型行为，只能人工审查 + 评测监控"
+    }
+  ]
+}

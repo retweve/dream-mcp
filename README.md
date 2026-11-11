@@ -51,6 +51,33 @@ node cli.mjs list
 
 **已知限制**：暂无功能缺口；G3 待补红队报告与公开基准对比。
 
+## G3 验证（独立可复现）
+
+```bash
+npm test        # 59 个单元测试（JCS / Merkle / 签名 / 核心 / prove / erase / RFC 向量）
+npm run eval    # 不变量 + 配对 A/B（Level 0）+ 生成 eval/results/g3-eval.md
+npm run redteam # 威胁模型逐条攻击 + 生成 security/REDTEAM.md
+npm run verify  # eval + redteam 一起跑（CI 用）
+```
+
+**本次结果**（生成文件里带时间戳与临时路径，以下为摘要）：
+
+- 不变量：6/6 通过（幂等、JCS 键序无关、k-匿名、inclusion、轻客户端一致性、删除零残留）
+- 配对 A/B（Level 0 仪器验证）：24 题，正确率 33.3% → 100%，配对差 0.667，
+  bootstrap 95% CI [0.500, 0.833]，Cohen's h = 1.911，对照题误报 0
+- 红队：**11 PASS / 0 FAIL / 2 SKIP**（SKIP = T05 Sybil、T10 反代限流，均为已知未防住）
+
+**诚实边界（UNVERIFIED，不伪造）**：
+
+| 项 | 原因 |
+|---|---|
+| H1 模型级 A/B（先验是否让 agent 答得更准） | 需要模型调用；本仓库规则禁止本地模块联网 |
+| 公开基准（LongMemEval / CL-Bench 子集） | 需要下载数据集并跑外部评测，未执行 |
+| 模型层注入（T01/T02）的真实影响 | 文本层无法判定模型行为，只能人工审查 + 评测监控 |
+
+> Level 0 只验证「测量机制能用」（配对、CI、效应量、不变量、攻击检测），
+> **不是**「共享记忆让 agent 变强」的结论。要下那个结论必须先跑 H1。
+
 没有任何依赖，Node 18+ 直接跑。
 
 ## 它是什么

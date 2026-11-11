@@ -8,6 +8,9 @@
     "node": ">=22.15.0"
   },
   "scripts": {
-    "test": "node --test \"tests/*.test.mjs\""
+    "test": "node --test \"tests/*.test.mjs\"",
+    "eval": "node eval/run.mjs",
+    "redteam": "node security/redteam.mjs",
+    "verify": "node eval/run.mjs && node security/redteam.mjs"
   }
 }
