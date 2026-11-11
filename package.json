@@ -1,0 +1,13 @@
+{
+  "name": "dream-mcp",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared dream pool MCP server: submit/list/get/stats, with JCS hashing, Ed25519 signatures, a Merkle transparency log and erasure proofs.",
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\""
+  }
+}

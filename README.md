@@ -18,6 +18,34 @@ node cli.mjs submit --file examples/example-dream.json
 node cli.mjs list
 ```
 
+## 完整性原语（G1，v1.2）
+
+| 能力 | 命令 | 依据 |
+|---|---|---|
+| 规范化哈希（键序无关） | 提交时自动 `hashAlg: "jcs-sha256/v1"` | RFC 8785 |
+| Ed25519 签名 | `node sign.mjs keygen --author 名字` → `node sign.mjs sign --file raw.json --key <keyId>` | RFC 8032 |
+| 验签 | `node sign.mjs verify --file signed.json` | RFC 8032 |
+| Merkle 透明日志 | `node prove.mjs` 输出并签名 STH | RFC 6962 |
+| inclusion proof | `node prove.mjs --id <id>` → `node prove.mjs --verify proof.json` | RFC 6962 |
+| 一致性证明 | `node prove.mjs --consistency <m>` | RFC 6962 |
+| 删除证明 | `node erase.mjs --id <id> --yes`（tombstone + 重建索引 + 零残留断言） | GDPR Art.17 |
+
+**签名覆盖什么**：`JCS({author,title,summary,entries,tags,lineage,consent})`，
+服务器附加字段（id/submittedAt/contentHash）不参与签名。签名封套在顶层 `.sig`：
+
+```json
+{ "alg": "ed25519", "keyId": "sha256:<16hex>", "publicKey": "<base64url 32B>", "value": "<base64url 64B>" }
+```
+
+**公钥目录（TOFU）**：`keys/<keyId>.json` 记录作者声明；同一公钥被登记为不同作者会被拒绝。
+私钥 `keys/<keyId>.private.pem` 只在本地、权限 0600、**永不入库**。
+
+**迁移兼容**：旧记录（`hashAlg` 缺失）标为 `legacy-jsonstringify`，不重算哈希、不做签名验证；
+新记录一律 `jcs-sha256/v1`。去重只在同 `hashAlg` 组内比较。
+
+**已知限制**：一致性证明的轻客户端验证（只给 oldRoot/newRoot/proof）尚未实现，
+当前 `verifyConsistency` 需要完整叶序列（服务端审计用），登记在 G2。
+
 没有任何依赖，Node 18+ 直接跑。
 
 ## 它是什么

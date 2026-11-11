@@ -1,2 +1,10 @@
 node_modules/
 *.log
+
+# 运行时数据与密钥：绝不入库
+*.private.pem
+keys/
+shared/
+sth.jsonl
+tombstones.jsonl
+distillate-*.json
